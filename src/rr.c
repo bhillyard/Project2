@@ -1,97 +1,142 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <lwp.h>
 
 // Define the structure for a node in the linked list
 typedef struct Node {
-    int data;
+    thread thread;
     struct Node* next;
 } Node;
 
-// Function to add a new node at the beginning of the linked list
-void addToLinkedList(Node** head, int data) {
-    // Create a new node
-    Node* newNode = (Node*)malloc(sizeof(Node));
-    newNode->data = data;
-    newNode->next = *head;
-
-    // Update the head pointer to point to the new node
-    *head = newNode;
-}
-
-// Function to delete a node at a specific index in the linked list
-void deleteAtIndex(Node** head, int index) {
-    // Check if the list is empty
-    if (*head == NULL) {
-        printf("List is empty.\n");
-        return;
-    }
-
-    // Check if the index is valid
-    if (index < 0) {
-        printf("Invalid index.\n");
-        return;
-    }
-
-    // If the index is 0, delete the first node
-    if (index == 0) {
-        Node* temp = *head;
-        *head = (*head)->next;
-        free(temp);
-        return;
-    }
-
-    // Traverse the list to find the node at the specified index
-    Node* current = *head;
-    Node* previous = NULL;
-    int count = 0;
-
-    while (current != NULL && count < index) {
-        previous = current;
-        current = current->next;
-        count++;
-    }
-
-    // If the index is out of range
-    if (current == NULL) {
-        printf("Index out of range.\n");
-        return;
-    }
-
-    // Delete the node at the specified index
-    previous->next = current->next;
-    free(current);
-}
+// Initialize global head
+Node *head = NULL;
 
 // Function to print the linked list
 void printLinkedList(Node* head) {
     Node* current = head;
 
     while (current != NULL) {
-        printf("%d ", current->data);
+        printf("%d ", current->thread);
         current = current->next;
     }
 
     printf("\n");
 }
 
-int main() {
-    Node* head = NULL;
+void rr_init(void){
+}
 
+void rr_shutdown(void){
+    Node* current = head;
+    Node* next;
+
+    while(current != NULL){
+        next = current->next;
+        free(current);
+        current = next;
+    }
+    head = NULL;
+}
+
+void rr_admit(thread new){
+    Node* new_node = malloc(sizeof(Node));
+    new_node->thread = new;
+    new_node->next = NULL;
+
+    if (head == NULL) {
+        head = new_node;
+    } else {
+        Node* current = head;
+        while (current->next != NULL) {
+            current = current->next;
+        }
+        current->next = new_node;
+    }
+}
+
+// Function to delete a node at a specific index in the linked list
+void rr_remove(thread thread) {
+    // Check if the list is empty
+    if (head == NULL) {
+        printf("List is empty.\n");
+        return;
+    }
+
+    // If the thread is the first one in the schedule, remove the first thread
+    if (head->thread == thread) {
+        Node* temp = head;
+        head = head->next;
+        free(temp);
+        return;
+    }
+
+    // Traverse the list to find the given thread
+    Node *current = head;
+    Node *previous = NULL;
+
+    while (current != NULL && current->thread != thread) {
+        previous = current;
+        current = current->next;
+    }
+
+    // If the index is out of range
+    if (current == NULL) {
+        printf("No such thread in schedule.\n");
+        return;
+    }
+
+    // Delete the thread at the specified thread
+    previous->next = current->next;
+    free(current);
+}
+
+thread next(){
+    if (head == NULL){
+        return NULL;
+    } else {
+        return head->thread;
+    }
+}
+
+int qlen(){
+    int count = 0;
+    Node* current = head;
+    while (current != NULL){
+        current = current->next;
+        count+=1;
+    }
+    return count;
+}
+
+int main() {
+    rr_init();
+    thread thread1;
+    thread thread2;
+    thread thread3;
+    thread thread4;
+    //thread1.tid = 1;
     // Add nodes to the linked list
-    addToLinkedList(&head, 3);
-    addToLinkedList(&head, 7);
-    addToLinkedList(&head, 9);
+    rr_admit(thread1);
+    rr_admit(thread2);
+    rr_admit(thread3);
 
     // Print the linked list
     printf("Linked List: ");
     printLinkedList(head);
 
-    // Delete a node at index 1
-    deleteAtIndex(&head, 1);
 
+    printf("%d\n", qlen());
+    // Delete a node at index 1
+    //rr_remove(thread1);
+    printf("%d\n", qlen());
+    rr_remove(thread4);
     // Print the updated linked list
     printf("Updated Linked List: ");
     printLinkedList(head);
+
+    rr_shutdown();
+    printLinkedList(head);
+    printf("%d\n", qlen());
 
     return 0;
 }
