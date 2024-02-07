@@ -26,9 +26,9 @@ static scheduler s = &rr;
 
 //state struct 
 
-int lwp_wrap(lwpfun function, void* argument){
+// int lwp_wrap(lwpfun function, void* argument){
 
-}
+// }
 
 tid_t lwp_create(lwpfun function, void* argument){
     thread newThread = (thread)malloc(sizeof(thread));
@@ -69,7 +69,35 @@ tid_t lwp_create(lwpfun function, void* argument){
     threadId += 1;
 
     rr_admit(newThread);
+    return threadId;
 }
+
+// void lwp_exit(int status){
+
+// }
+
+tid_t lwp_gettid(void){
+    return threadId;
+}
+
+// void lwp_yield(void){
+
+// }
+// void lwp_start(void){
+
+// }
+// tid_t lwp_wait(int *){
+
+// }
+// void lwp_set_scheduler(scheduler fun){
+
+// }
+// scheduler lwp_get_scheduler(void){
+
+// }
+// thread tid2thread(tid_t tid){
+
+// }
 
 void test(){
     printf("Hello\n");
@@ -78,6 +106,8 @@ void test(){
 int main() {
     lwp_create((lwpfun)&test, NULL);
 }
+
+
 
 //use function call to go back to the main thread that you have
 //go back call at the very top of the stack (manually go up there and put it in)
