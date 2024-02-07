@@ -51,8 +51,13 @@ tid_t lwp_create(lwpfun function, void* argument){
         perror("mmap");
         return -1;
     }
-}
 
+    newThread->tid = threads;
+    threads+=1;
+    newThread->stack = stack;
+    newThread->stacksize = rlim.rlim_cur;
+    
+}
 
 void test(){
     printf("Hello\n");
