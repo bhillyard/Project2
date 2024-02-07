@@ -90,7 +90,7 @@ void rr_remove(thread thread) {
     free(current);
 }
 
-thread next(){
+thread rr_next(){
     if (head == NULL){
         return NULL;
     } else {
@@ -98,7 +98,7 @@ thread next(){
     }
 }
 
-int qlen(){
+int rr_qlen(){
     int count = 0;
     Node* current = head;
     while (current != NULL){
@@ -108,35 +108,6 @@ int qlen(){
     return count;
 }
 
-int main() {
-    rr_init();
-    thread thread1;
-    thread thread2;
-    thread thread3;
-    thread thread4;
-    //thread1.tid = 1;
-    // Add nodes to the linked list
-    rr_admit(thread1);
-    rr_admit(thread2);
-    rr_admit(thread3);
-
-    // Print the linked list
-    printf("Linked List: ");
-    printLinkedList(head);
-
-
-    printf("%d\n", qlen());
-    // Delete a node at index 1
-    //rr_remove(thread1);
-    printf("%d\n", qlen());
-    rr_remove(thread4);
-    // Print the updated linked list
-    printf("Updated Linked List: ");
-    printLinkedList(head);
-
-    rr_shutdown();
-    printLinkedList(head);
-    printf("%d\n", qlen());
-
-    return 0;
-}
+struct scheduler rr = {NULL, NULL, rr_admit, rr_remove, rr_next, rr_qlen};
+scheduler RoundRobin = &rr;
+//dont need rr_init, rr_shutdown
