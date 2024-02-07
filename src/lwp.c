@@ -67,6 +67,8 @@ tid_t lwp_create(lwpfun function, void* argument){
     newThread->sched_two = NULL;
 
     threadId += 1;
+
+    rr_admit(newThread);
 }
 
 void test(){
