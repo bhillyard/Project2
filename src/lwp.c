@@ -5,6 +5,11 @@
 #include <sys/mman.h>
 #include "lwp.h"
 #include "rr.c"
+//needed for map_anonymous and map_stack
+#include <asm-generic/mman-common.h>
+#include <asm-generic/mman.h>
+
+#define STACK_SIZE_DEFAULT (8 * 1024 * 1024) // 8MB
 
 tid_t threads = 1;
 
@@ -25,7 +30,7 @@ tid_t lwp_create(lwpfun function, void* argument){
     thread newThread = (thread)malloc(sizeof(thread));
     //printf("got here\n");
     
-    /*long page_size = sysconf(_SC_PAGE_SIZE);
+    long page_size = sysconf(_SC_PAGE_SIZE);
     if (page_size == -1){
         perror("sysconf");
         return -1;
@@ -33,18 +38,19 @@ tid_t lwp_create(lwpfun function, void* argument){
 
     // Check stack size resource limit
     struct rlimit rlim;
-    if (getrliimit(RLIMIT_STACK, &rlim) != 0 || rlim.rlim_cur == RLIM_INFINITY){
-        rlime.rlim_cur = STACK_SIZE_DEFAULT;
+    if (getrlimit(RLIMIT_STACK, &rlim) != 0 || rlim.rlim_cur == RLIM_INFINITY){
+        rlim.rlim_cur = STACK_SIZE_DEFAULT;
     }
 
     // Round to nearest multiple of page size
-    rlim.rim_cur = (rlim.rlim_cur + page_size - 1) / page_size * page_size;
+    rlim.rlim_cur = (rlim.rlim_cur + page_size - 1) / page_size * page_size;
+    printf("%d\n", rlim.rlim_cur);
 
-    void* stack = mmap(NULL, rlim.rlim_cur, PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_STACK, -1, 0);
+    void* stack = mmap(NULL, rlim.rlim_cur, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
     if (stack == MAP_FAILED) {
         perror("mmap");
         return -1;
-    }*/
+    }
 }
 
 
