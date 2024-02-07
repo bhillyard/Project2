@@ -10,8 +10,12 @@
 #include <asm-generic/mman.h>
 
 #define STACK_SIZE_DEFAULT (8 * 1024 * 1024) // 8MB
+#define LWP_RUNNING     1
+#define LWP_READY       2
+#define LWP_BLOCKED     3
+#define LWP_TERMINATED  4
 
-tid_t threads = 1;
+tid_t threadId = 1;
 
 static scheduler s = &rr;
 //access s with s->admin(lwp1) or s->next()
@@ -51,6 +55,18 @@ tid_t lwp_create(lwpfun function, void* argument){
         perror("mmap");
         return -1;
     }
+
+    newThread->tid = threadId;
+    newThread->stack = stack;
+    newThread->stacksize = rlim.rlim_cur; 
+    newThread->status = LWP_READY;
+    newThread->exited = 0;
+    newThread->lib_one = NULL;
+    newThread->lib_two = NULL;
+    newThread->sched_one = NULL;
+    newThread->sched_two = NULL;
+
+    threadId += 1;
 }
 
 
