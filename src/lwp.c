@@ -60,8 +60,9 @@ tid_t lwp_create(lwpfun function, void* argument){
     newThread->tid = threadId;
     newThread->stack = stack;
     newThread->stacksize = rlim.rlim_cur; 
+    newThread->state.fxsave = FPU_INIT;
     newThread->state.rdi = (unsigned long)argument;
-    newThread->state.rbp = (unsigned long)function;
+    newThread->state.rbp = (unsigned long)function; // top of stack address?
     newThread->status = LWP_READY;
     newThread->exited = 0;
     newThread->lib_one = NULL;
@@ -76,7 +77,10 @@ tid_t lwp_create(lwpfun function, void* argument){
 }
 
 // void lwp_exit(int status){
-
+//     currThread->status = LWP_TERMINATED;
+//     rr_remove(currThread);
+//     currThread = s->next()
+//     // wake up sleeping threads if any
 // }
 
 tid_t lwp_gettid(void){
@@ -99,16 +103,15 @@ void lwp_start(void){
     lwp_yield();
 }
 // tid_t lwp_wait(int *){
-
 // }
+
 // void lwp_set_scheduler(scheduler sched){
-
 // }
+
 // scheduler lwp_get_scheduler(void){
-
 // }
-// thread tid2thread(tid_t tid){
 
+// thread tid2thread(tid_t tid){
 // }
 
 void test(){
@@ -118,8 +121,6 @@ void test(){
 int main() {
     lwp_create((lwpfun)&test, NULL);
 }
-
-
 
 //use function call to go back to the main thread that you have
 //go back call at the very top of the stack (manually go up there and put it in)
