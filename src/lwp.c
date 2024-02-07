@@ -16,7 +16,7 @@
 #define LWP_TERMINATED  4
 
 tid_t threadId = 1;
-
+thread currThread = NULL;
 static scheduler s = &rr;
 //access s with s->admin(lwp1) or s->next()
 
@@ -56,9 +56,12 @@ tid_t lwp_create(lwpfun function, void* argument){
         return -1;
     }
 
+    // Initialize Thread Info
     newThread->tid = threadId;
     newThread->stack = stack;
     newThread->stacksize = rlim.rlim_cur; 
+    newThread->state.rdi = (unsigned long)argument;
+    newThread->state.rbp = (unsigned long)function;
     newThread->status = LWP_READY;
     newThread->exited = 0;
     newThread->lib_one = NULL;
@@ -67,7 +70,7 @@ tid_t lwp_create(lwpfun function, void* argument){
     newThread->sched_two = NULL;
 
     threadId += 1;
-
+    
     rr_admit(newThread);
     return threadId;
 }
@@ -80,16 +83,25 @@ tid_t lwp_gettid(void){
     return threadId;
 }
 
-// void lwp_yield(void){
+void lwp_yield(void){
+    thread next = s->next();
+    context newContext = next->context;
+    swaprfiles(currThread, next)
+}
 
-// }
-// void lwp_start(void){
-
-// }
+void lwp_start(void){
+    thread newThread = (thread)malloc(sizeof(thread));
+    newThread->tid = threadId;
+    newThread->stack = NULL;
+    newThread->status = LWP_READY;
+    rr_admit(newThread);
+    currThread = newThread;
+    lwp_yield();
+}
 // tid_t lwp_wait(int *){
 
 // }
-// void lwp_set_scheduler(scheduler fun){
+// void lwp_set_scheduler(scheduler sched){
 
 // }
 // scheduler lwp_get_scheduler(void){
