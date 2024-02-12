@@ -10,10 +10,12 @@
 #include <asm-generic/mman.h>
 
 #define STACK_SIZE_DEFAULT (8 * 1024 * 1024) // 8MB
-#define LWP_RUNNING     1
-#define LWP_READY       2
-#define LWP_BLOCKED     3
-#define LWP_TERMINATED  4
+//LWP_TERM = 1
+//LWP_LIVE = 0 and we use those
+//#define LWP_RUNNING     1
+//#define LWP_READY       2
+//#define LWP_BLOCKED     3
+//#define LWP_TERMINATED  4
 
 tid_t threadId = 1;
 thread currThread = NULL;
@@ -26,12 +28,14 @@ static scheduler s = &rr;
 
 //state struct 
 
-// int lwp_wrap(lwpfun function, void* argument){
-
-// }
+static void lwp_wrap(lwpfun function, void* argument){
+    int rval;
+    rval = function(argument);
+    lwp_exit(rval);
+}
 
 tid_t lwp_create(lwpfun function, void* argument){
-    thread newThread = (thread)malloc(sizeof(thread));
+    thread newThread = (thread)malloc(sizeof(context));
     //printf("got here\n");
     
     long page_size = sysconf(_SC_PAGE_SIZE);
@@ -61,9 +65,11 @@ tid_t lwp_create(lwpfun function, void* argument){
     newThread->stack = stack;
     newThread->stacksize = rlim.rlim_cur; 
     newThread->state.fxsave = FPU_INIT;
-    newThread->state.rdi = (unsigned long)argument;
-    newThread->state.rbp = (unsigned long)function; // top of stack address?
-    newThread->status = LWP_READY;
+    newThread->state.rdi = (unsigned long)function;
+    newThread->state.rbp = (unsigned long)stack; // top of stack address?
+    newThread->state.rsi = (unsigned long)argument;
+    newThread->state.rsp = (unsigned long)stack;
+    newThread->status = LWP_LIVE;
     newThread->exited = 0;
     newThread->lib_one = NULL;
     newThread->lib_two = NULL;
@@ -76,28 +82,37 @@ tid_t lwp_create(lwpfun function, void* argument){
     return threadId;
 }
 
-// void lwp_exit(int status){
-//     currThread->status = LWP_TERMINATED;
-//     rr_remove(currThread);
-//     currThread = s->next()
-//     // wake up sleeping threads if any
-// }
+void lwp_exit(int exitval){
+     currThread->status = LWP_TERM;
+     rr_remove(currThread);
+     currThread = s->next()
+     // wake up sleeping threads if any
+}
 
 tid_t lwp_gettid(void){
     return threadId;
 }
 
 void lwp_yield(void){
+    //need a mysterious error check here that is not swaprfiles?
     thread next = s->next();
-    context newContext = next->context;
-    swaprfiles(currThread, next)
+    if (next == NULL){
+        //return exit status of termination status of calling thread
+        exit(-1);
+    }
+    //first argument will populate the current registers 
+    swaprfiles(currThread->state, next->state);
+    currThread = next;
 }
 
 void lwp_start(void){
     thread newThread = (thread)malloc(sizeof(thread));
     newThread->tid = threadId;
     newThread->stack = NULL;
-    newThread->status = LWP_READY;
+    newThread->status = LWP_LIVE;
+
+    threadId += 1;
+
     rr_admit(newThread);
     currThread = newThread;
     lwp_yield();
