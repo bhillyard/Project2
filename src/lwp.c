@@ -17,6 +17,7 @@ tid_t threadId = 1;
 thread currThread = NULL;
 static scheduler s = &rr;
 static scheduler t = &rr;
+static scheduler w = &rr;
 //access s with s->admit(lwp1) or s->next()
 
 //lwp exit exits pog
@@ -24,6 +25,20 @@ static scheduler t = &rr;
 //get context of register from swaprfiles
 
 //state struct 
+
+void lwp_exit(int exitval){
+     currThread->status = LWP_TERM;
+     s->remove(currThread);
+     if (w->qlen() > 0){
+        thread waitThread = w->next();
+        w->remove(waitThread);
+        waitThread->exited = currThread;
+        s->admit(waitThread);
+     } else {
+        t->admit(currThread);
+     }
+     lwp_yield();
+}
 
 static void lwp_wrap(lwpfun function, void* argument){
     int rval;
@@ -57,6 +72,9 @@ tid_t lwp_create(lwpfun function, void* argument){
         return -1;
     }
 
+    //newThread->stack-3
+
+
     // Initialize Thread Info
     newThread->tid = threadId;
     newThread->stack = stack;
@@ -75,19 +93,15 @@ tid_t lwp_create(lwpfun function, void* argument){
 
 
     // put lwp wrap at top of stack so that it executes 
-    stack[newThread->stacksize] = lwp_wrap(function, argument);
+    //subtract 1 from stack pointer = subtract 8
+    stack[rlim.rlim_cur] = lwp_wrap(function, argument);
+    //put dummy number at s+size-1 
+    //put lwpwrap at s+size-2
+    //
     threadId += 1;
     
-    s->rr_admit(newThread);
+    s->admit(newThread);
     return threadId;
-}
-
-void lwp_exit(int exitval){
-     currThread->status = LWP_TERM;
-     s->rr_remove(currThread);
-     t->rr_admit(curThread);
-     currThread = s->next();;
-     // wake up sleeping threads if any
 }
 
 tid_t lwp_gettid(void){
@@ -97,12 +111,19 @@ tid_t lwp_gettid(void){
 void lwp_yield(void){
     //need a mysterious error check here that is not swaprfiles?
     thread next = s->next();
+    s->remove(next);
     if (next == NULL){
         //return exit status of termination status of calling thread
+        //know you are the only thread and you can free yourself
+        //exited keep track of if there is waiting
+        //oldestwaitingthread->exit 
+        //associate waiting threads with terminated 
+        //set curprocess (main process) exited to recent exited thread
         exit(-1);
     }
     //first argument will populate the current registers 
     swaprfiles(currThread->state, next->state);
+    s->admit(currThread);
     currThread = next;
 }
 
@@ -114,12 +135,36 @@ void lwp_start(void){
 
     threadId += 1;
 
-    s->rr_admit(newThread);
+    s->admit(newThread);
     currThread = newThread;
     lwp_yield();
 }
-// tid_t lwp_wait(int *){
-// }
+
+tid_t lwp_wait(int *status){
+    tid_t id = NO_THREAD;
+    thread removed;
+    if (t->qlen() > 0){
+        removed = t->next();
+        if ((removed->stack) != NULL){
+            free(removed->stack);
+        }
+        id = removed->tid;
+        *status = removed->status;
+        free(removed);
+    } else if (s->qlen() > 1){
+        w->admit(currThread);
+        s->remove(currThread);
+        lwp_yield();
+        removed = currThread->exited;
+        if ((removed->stack) != NULL){
+            free(removed->stack);
+        }
+        id = removed->tid;
+        *status = removed->status;
+        free(removed);
+    }
+    return id;
+}
 
 void lwp_set_scheduler(scheduler sched){
     if (sched == NULL){
@@ -135,6 +180,7 @@ scheduler lwp_get_scheduler(void){
 
 // thread tid2thread(tid_t tid){
 // }
+
 
 void test(){
     printf("Hello\n");
