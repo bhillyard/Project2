@@ -77,7 +77,7 @@ tid_t lwp_create(lwpfun function, void* argument){
     stack_top--;
     *stack_top = (unsigned long)argument;
     stack_top--;
-    *stack_top = (unsigned long)lwp_wrap(); //lwp(function, argument) ??  + 5? (dummy, lwp_wrap, func, args, ___)
+    *stack_top = (unsigned long)lwp_wrap; //lwp(function, argument) ??  + 5? (dummy, lwp_wrap, func, args, ___)
 
 
     // Initialize Thread Info
@@ -99,7 +99,7 @@ tid_t lwp_create(lwpfun function, void* argument){
 
     // put lwp wrap at top of stack so that it executes 
     //subtract 1 from stack pointer = subtract 8
-    stack[rlim.rlim_cur] = lwp_wrap(function, argument);
+    // stack[rlim.rlim_cur] = lwp_wrap(function, argument);
     //put dummy number at s+size-1 
     //put lwpwrap at s+size-2
     //
@@ -125,7 +125,7 @@ void lwp_yield(void){
         exit(-1);
     }
     //first argument will populate the current registers 
-    swaprfiles(currThread->state, next->state);
+    swap_rfiles(&(currThread->state), &(next->state));
     s->admit(currThread);
     currThread = next;
 }

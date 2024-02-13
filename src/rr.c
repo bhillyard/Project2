@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <lwp.h>
+#include "lwp.h"
 
 // Define the structure for a node in the linked list
 typedef struct Node {
