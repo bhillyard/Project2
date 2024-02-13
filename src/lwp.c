@@ -72,7 +72,12 @@ tid_t lwp_create(lwpfun function, void* argument){
         return -1;
     }
 
-    //newThread->stack-3
+    unsigned long* stack_top = (unsigned long*)((char*)stack + newThread->stacksize);
+    *stack_top = (unsigned long)function;
+    stack_top--;
+    *stack_top = (unsigned long)argument;
+    stack_top--;
+    *stack_top = (unsigned long)lwp_wrap(); //lwp(function, argument) ??  + 5? (dummy, lwp_wrap, func, args, ___)
 
 
     // Initialize Thread Info
@@ -113,12 +118,10 @@ void lwp_yield(void){
     thread next = s->next();
     s->remove(next);
     if (next == NULL){
-        //return exit status of termination status of calling thread
-        //know you are the only thread and you can free yourself
-        //exited keep track of if there is waiting
-        //oldestwaitingthread->exit 
-        //associate waiting threads with terminated 
-        //set curprocess (main process) exited to recent exited thread
+        if ((currThread->stack) != NULL){
+            free(currThread->stack);
+        }
+        free(currThread);
         exit(-1);
     }
     //first argument will populate the current registers 
