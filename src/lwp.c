@@ -12,10 +12,6 @@
 #define STACK_SIZE_DEFAULT (8 * 1024 * 1024) // 8MB
 //LWP_TERM = 1
 //LWP_LIVE = 0 and we use those
-//#define LWP_RUNNING     1
-//#define LWP_READY       2
-//#define LWP_BLOCKED     3
-//#define LWP_TERMINATED  4
 
 tid_t threadId = 1;
 thread currThread = NULL;
@@ -90,7 +86,7 @@ void lwp_exit(int exitval){
      currThread->status = LWP_TERM;
      s->rr_remove(currThread);
      t->rr_admit(curThread);
-     currThread = s->next();
+     currThread = s->next();;
      // wake up sleeping threads if any
 }
 
@@ -125,11 +121,17 @@ void lwp_start(void){
 // tid_t lwp_wait(int *){
 // }
 
-// void lwp_set_scheduler(scheduler sched){
-// }
+void lwp_set_scheduler(scheduler sched){
+    if (sched == NULL){
+        printf("Invalid scheduler. \n");
+        s = &rr;
+    }
+    s = sched;
+}
 
-// scheduler lwp_get_scheduler(void){
-// }
+scheduler lwp_get_scheduler(void){
+    return s;
+}
 
 // thread tid2thread(tid_t tid){
 // }
