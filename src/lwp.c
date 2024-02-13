@@ -20,7 +20,8 @@
 tid_t threadId = 1;
 thread currThread = NULL;
 static scheduler s = &rr;
-//access s with s->admin(lwp1) or s->next()
+static scheduler t = &rr;
+//access s with s->admit(lwp1) or s->next()
 
 //lwp exit exits pog
 //lwp wrap take eveyrthing manually (function, argument, return value lwpexit)
@@ -76,16 +77,20 @@ tid_t lwp_create(lwpfun function, void* argument){
     newThread->sched_one = NULL;
     newThread->sched_two = NULL;
 
+
+    // put lwp wrap at top of stack so that it executes 
+    stack[newThread->stacksize] = lwp_wrap(function, argument);
     threadId += 1;
     
-    rr_admit(newThread);
+    s->rr_admit(newThread);
     return threadId;
 }
 
 void lwp_exit(int exitval){
      currThread->status = LWP_TERM;
-     rr_remove(currThread);
-     currThread = s->next()
+     s->rr_remove(currThread);
+     t->rr_admit(curThread);
+     currThread = s->next();
      // wake up sleeping threads if any
 }
 
@@ -113,7 +118,7 @@ void lwp_start(void){
 
     threadId += 1;
 
-    rr_admit(newThread);
+    s->rr_admit(newThread);
     currThread = newThread;
     lwp_yield();
 }
