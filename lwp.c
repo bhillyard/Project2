@@ -72,7 +72,11 @@ tid_t lwp_create(lwpfun function, void* argument){
     printf("%d\n", rlim.rlim_cur);
     printf("Hello\n");
 
-    void* stack = mmap(NULL, rlim.rlim_cur, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
+    unsigned long *stack = mmap(NULL, rlim.rlim_cur, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
+    newThread->stack = (unsigned long *)stack;
+    newThread->state.rsp = (unsigned long)stack;
+    newThread->state.rbp = (unsigned long)stack; // top of stack address?
+
     if (stack == MAP_FAILED) {
         perror("mmap");
         return -1;
@@ -83,24 +87,25 @@ tid_t lwp_create(lwpfun function, void* argument){
         exit(EXIT_FAILURE);
     }
 
-    unsigned long* stack_top = (unsigned long*)stack + (rlim.rlim_cur / sizeof(unsigned long));
     newThread->stack = stack;
-    stack_top--;
-    stack_top--;
-    *stack_top = (unsigned long)lwp_wrap;
+
+    stack += rlim.rlim_cur / sizeof(unsigned long);
+
+    stack--; //decrement 8 bits
+    stack--; //decrement 8 bits
+
+    *stack = (unsigned long)lwp_wrap;
     printf("Wrap on stack\n");
-    stack_top--;
+    stack--;
 
 
     // Initialize Thread Info
     newThread->tid = threadId;
-    newThread->stack = stack;
-    newThread->stacksize = rlim.rlim_cur; 
+    //newThread->stack = stack;
+    newThread->stacksize = (size_t)rlim.rlim_cur; 
     newThread->state.fxsave = FPU_INIT;
     newThread->state.rdi = (unsigned long)function;
-    newThread->state.rbp = (unsigned long)stack; // top of stack address?
     newThread->state.rsi = (unsigned long)argument;
-    newThread->state.rsp = (unsigned long)stack;
     newThread->status = LWP_LIVE;
     newThread->exited = NULL;
     newThread->lib_one = NULL;
@@ -108,7 +113,7 @@ tid_t lwp_create(lwpfun function, void* argument){
     newThread->sched_one = NULL;
     newThread->sched_two = NULL;
     //stack point, base pointer, function, argument
-
+    printf("futher\n");
 
     // put lwp wrap at top of stack so that it executes 
     //subtract 1 from stack pointer = subtract 8
@@ -119,7 +124,8 @@ tid_t lwp_create(lwpfun function, void* argument){
     threadId += 1;
     
     s->admit(newThread);
-    return threadId;
+    printf("after admit\n");
+    return threadId-1;
 }
 
 tid_t lwp_gettid(void){
