@@ -65,7 +65,9 @@ int main(int argc, char *argv[]){
   for(i=1;i<=5;i++) {
     int status,num;
     tid_t t;
+    printf("before waitDdddDDDDDDDDDDDDD\n");
     t = lwp_wait(&status);
+    printf("after wait\n");
     num = LWPTERMSTAT(status);
     printf("Thread %ld exited with status %d\n",t,num);
   }

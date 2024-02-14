@@ -33,16 +33,17 @@ void lwp_exit(int exitval){ //wrong lol
         // if yes - admit oldest, remove from waiting list
     // list of dead threads, add currThread to dead threads
     // yield()
+     printf("EXITING SOMETHING\n");
      currThread->status = LWP_TERM;
      s->remove(currThread);
      if (w->qlen() > 0){
         thread waitThread = w->next();
+        printf("WAITING THREAD PID IS %d", waitThread->tid);
+        s->admit(waitThread);
         w->remove(waitThread);
         waitThread->exited = currThread;
-        s->admit(waitThread);
-     } else {
-        t->admit(currThread);
-     }
+     } 
+     t->admit(currThread);
      //t->admit(currThread);
      lwp_yield();
 }
@@ -138,7 +139,8 @@ tid_t lwp_gettid(void){
 void lwp_yield(void){
     //need a mysterious error check here that is not swaprfiles?
     thread next = s->next();
-    s->remove(next);
+    printf("removing thread %d next\n", next->tid);
+    //s->remove(next);
     if (next == NULL){
         if ((currThread->stack) != NULL){
             free(currThread->stack);
@@ -146,10 +148,14 @@ void lwp_yield(void){
         free(currThread);
         exit(-1);
     }
-    //first argument will populate the current registers 
-    swap_rfiles(&(currThread->state), &(next->state));
-    s->admit(currThread);
-    currThread = next;
+    //first argument will populate the current registers
+    thread temp = currThread;
+    currThread = next; 
+    swap_rfiles(&(temp->state), &(currThread->state));
+    //printf("yielding and qlen is %d\n", s->qlen());
+    //printf("thread %d going back into schduler\n", currThread->tid);
+    //s->admit(currThread);
+    //currThread = next;
 }
 
 void lwp_start(void){
@@ -169,6 +175,7 @@ void lwp_start(void){
 tid_t lwp_wait(int *status){
     tid_t id = NO_THREAD;
     thread removed;
+    printf("WE WAITING DOG\n");
     if (t->qlen() > 0){
         removed = t->next();
         if ((removed->stack) != NULL){
