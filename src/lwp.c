@@ -181,8 +181,16 @@ scheduler lwp_get_scheduler(void){
     return s;
 }
 
-// thread tid2thread(tid_t tid){
-// }
+thread tid2thread(tid_t tid){
+    thread curr = currThread;
+    while (curr != NULL){
+        if (curr->tid == tid){
+            return curr;
+        }
+        curr = curr->lib_one;
+    }
+    return NULL;
+}
 
 
 void test(){
