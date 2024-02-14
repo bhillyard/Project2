@@ -15,9 +15,9 @@
 
 tid_t threadId = 1;
 thread currThread = NULL;
-static scheduler s = &rr;
-static scheduler t = &rr;
-static scheduler w = &rr;
+static scheduler s = &rr; //ready 
+static scheduler t = &rr; //terminated / dead
+static scheduler w = &rr; //waiting
 //access s with s->admit(lwp1) or s->next()
 
 //lwp exit exits pog
@@ -26,7 +26,14 @@ static scheduler w = &rr;
 
 //state struct 
 
-void lwp_exit(int exitval){
+void lwp_exit(int exitval){ //wrong lol 
+    // terminated status
+    // remove from scheduler
+    // check for waiting (all associated with dead)
+        // if yes - admit oldest, remove from waiting list
+    // list of dead threads, add currThread to dead threads
+    // yield()
+    printf("Hello\n");
      currThread->status = LWP_TERM;
      s->remove(currThread);
      if (w->qlen() > 0){
@@ -34,9 +41,8 @@ void lwp_exit(int exitval){
         w->remove(waitThread);
         waitThread->exited = currThread;
         s->admit(waitThread);
-     } else {
-        t->admit(currThread);
-     }
+     } 
+     t->admit(currThread);
      lwp_yield();
 }
 
@@ -65,8 +71,9 @@ tid_t lwp_create(lwpfun function, void* argument){
     // Round to nearest multiple of page size
     rlim.rlim_cur = (rlim.rlim_cur + page_size - 1) / page_size * page_size;
     printf("%d\n", rlim.rlim_cur);
+    printf("Hello\n");
 
-    void* stack = mmap(NULL, rlim.rlim_cur, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
+    void* stack = mmap(NULL, sizeof(context), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
     if (stack == MAP_FAILED) {
         perror("mmap");
         return -1;
@@ -76,7 +83,9 @@ tid_t lwp_create(lwpfun function, void* argument){
     newThread->stack = stack;
     stack_top--;
     stack_top--;
+    printf("Wrap\n");
     *stack_top = (unsigned long)lwp_wrap;
+    printf("Wrap Passed\n");
     stack_top--;
 
 
