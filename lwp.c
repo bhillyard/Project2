@@ -33,7 +33,6 @@ void lwp_exit(int exitval){ //wrong lol
         // if yes - admit oldest, remove from waiting list
     // list of dead threads, add currThread to dead threads
     // yield()
-    printf("Hello\n");
      currThread->status = LWP_TERM;
      s->remove(currThread);
      if (w->qlen() > 0){
@@ -73,19 +72,23 @@ tid_t lwp_create(lwpfun function, void* argument){
     printf("%d\n", rlim.rlim_cur);
     printf("Hello\n");
 
-    void* stack = mmap(NULL, sizeof(context), PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
+    void* stack = mmap(NULL, rlim.rlim_cur, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
     if (stack == MAP_FAILED) {
         perror("mmap");
         return -1;
     }
 
-    unsigned long* stack_top = (unsigned long*)stack + (newThread->stacksize);
+    if ((uintptr_t)stack % 16 != 0){
+        perror("Stack not aligned");
+        exit(EXIT_FAILURE);
+    }
+
+    unsigned long* stack_top = (unsigned long*)stack + (rlim.rlim_cur / sizeof(unsigned long));
     newThread->stack = stack;
     stack_top--;
     stack_top--;
-    printf("Wrap\n");
     *stack_top = (unsigned long)lwp_wrap;
-    printf("Wrap Passed\n");
+    printf("Wrap on stack\n");
     stack_top--;
 
 
@@ -141,6 +144,7 @@ void lwp_yield(void){
 }
 
 void lwp_start(void){
+    printf("Annie");
     thread newThread = (thread)malloc(sizeof(thread));
     newThread->tid = threadId;
     newThread->stack = NULL;
