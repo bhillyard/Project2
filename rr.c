@@ -42,11 +42,11 @@ void rr_admit(thread new){
     Node* new_node = malloc(sizeof(Node));
     Node* current;
     new_node->thread = new;
-    printf("thread is %d going into scheduler\n", new->tid);
+    //printf("thread is %d going into scheduler\n", new->tid);
     new_node->next = NULL;
 
     if (head == NULL) {
-        printf("resetting head\n");
+        //printf("resetting head\n");
         head = new_node;
     } else {
         current = head;
@@ -60,8 +60,8 @@ void rr_admit(thread new){
 
 // Function to delete a node at a specific index in the linked list
 void rr_remove(thread thread) {
-    printLinkedList(head);
-    printf("\n\n\n\n\n\n\n");
+    //printLinkedList(head);
+    //printf("\n\n\n\n\n\n\n");
     // Check if the list is empty
     if (head == NULL) {
         printf("List is empty.\n");
@@ -100,9 +100,9 @@ thread rr_next(){
     if (head == NULL){
         return NULL;
     } else {
-        printf("head theadis is %d\n", head->thread->tid);
-        printf("len is %d\n", rr_qlen());
-        printLinkedList(head);
+        //printf("head theadis is %d\n", head->thread->tid);
+        //printf("len is %d\n", rr_qlen());
+        //printLinkedList(head);
         return head->thread;
     }
 }
@@ -119,4 +119,10 @@ int rr_qlen(){
 
 struct scheduler rr = {NULL, NULL, rr_admit, rr_remove, rr_next, rr_qlen};
 scheduler RoundRobin = &rr;
+
+struct scheduler ww = {NULL, NULL, rr_admit, rr_remove, rr_next, rr_qlen};
+scheduler RoundRobinW = &ww;
+
+struct scheduler tt = {NULL, NULL, rr_admit, rr_remove, rr_next, rr_qlen};
+scheduler RoundRobinT = &tt;
 //dont need rr_init, rr_shutdown

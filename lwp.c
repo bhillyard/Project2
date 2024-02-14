@@ -16,8 +16,8 @@
 tid_t threadId = 1;
 thread currThread = NULL;
 static scheduler s = &rr; //ready 
-static scheduler t = &rr; //terminated / dead
-static scheduler w = &rr; //waiting
+static scheduler t = &tt; //terminated / dead
+static scheduler w = &ww; //waiting
 //access s with s->admit(lwp1) or s->next()
 
 //lwp exit exits pog
@@ -36,9 +36,10 @@ void lwp_exit(int exitval){ //wrong lol
      printf("EXITING SOMETHING\n");
      currThread->status = LWP_TERM;
      s->remove(currThread);
+     printf("%d\n", w->qlen());
      if (w->qlen() > 0){
         thread waitThread = w->next();
-        printf("WAITING THREAD PID IS %d", waitThread->tid);
+        printf("WAITING THREAD PID IS %d\n", waitThread->tid);
         s->admit(waitThread);
         w->remove(waitThread);
         waitThread->exited = currThread;
@@ -72,8 +73,8 @@ tid_t lwp_create(lwpfun function, void* argument){
 
     // Round to nearest multiple of page size
     rlim.rlim_cur = (rlim.rlim_cur + page_size - 1) / page_size * page_size;
-    printf("%d\n", rlim.rlim_cur);
-    printf("Hello\n");
+    //printf("%d\n", rlim.rlim_cur);
+    //printf("Hello\n");
 
     unsigned long *stack = mmap(NULL, rlim.rlim_cur, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
     newThread->stack = (unsigned long *)stack;
@@ -96,7 +97,7 @@ tid_t lwp_create(lwpfun function, void* argument){
     stack--; //decrement 8 bits
 
     *stack = (unsigned long)lwp_wrap;
-    printf("Wrap on stack\n");
+    //printf("Wrap on stack\n");
     stack--; //decrement 8 more bits
 
     newThread->state.rsp = (unsigned long)stack;
@@ -117,7 +118,7 @@ tid_t lwp_create(lwpfun function, void* argument){
     newThread->sched_one = NULL;
     newThread->sched_two = NULL;
     //stack point, base pointer, function, argument
-    printf("futher\n");
+    //printf("futher\n");
 
     // put lwp wrap at top of stack so that it executes 
     //subtract 1 from stack pointer = subtract 8
@@ -139,7 +140,7 @@ tid_t lwp_gettid(void){
 void lwp_yield(void){
     //need a mysterious error check here that is not swaprfiles?
     thread next = s->next();
-    printf("removing thread %d next\n", next->tid);
+    //printf("removing thread %d next\n", next->tid);
     //s->remove(next);
     if (next == NULL){
         if ((currThread->stack) != NULL){
