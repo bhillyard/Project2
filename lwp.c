@@ -5,6 +5,7 @@
 #include <sys/mman.h>
 #include "lwp.h"
 #include "rr.c"
+#include "ll.c"
 //needed for map_anonymous and map_stack
 #include <asm-generic/mman-common.h>
 #include <asm-generic/mman.h>
@@ -16,8 +17,10 @@
 tid_t threadId = 1;
 thread currThread = NULL;
 static scheduler s = &rr; //ready 
-static scheduler t = &tt; //terminated / dead
-static scheduler w = &ww; //waiting
+static LinkedList wList = createLinkedList();
+static LinkedList tList = createLinkedList();
+//static scheduler t = &tt; //terminated / dead
+//static scheduler w = &ww; //waiting
 //access s with s->admit(lwp1) or s->next()
 
 //lwp exit exits pog
@@ -36,8 +39,8 @@ void lwp_exit(int exitval){ //wrong lol
      printf("EXITING SOMETHING\n");
      currThread->status = LWP_TERM;
      s->remove(currThread);
-     printf("%d\n", w->qlen());
-     if (w->qlen() > 0){
+     printf("%d\n", len(wList));
+     if (len(wList) > 0){
         thread waitThread = w->next();
         printf("WAITING THREAD PID IS %d\n", waitThread->tid);
         s->admit(waitThread);
