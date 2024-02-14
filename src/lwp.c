@@ -11,7 +11,7 @@
 
 #define STACK_SIZE_DEFAULT (8 * 1024 * 1024) // 8MB
 //LWP_TERM = 1
-//LWP_LIVE = 0 and we use those
+//LWP_LIVE = 0 a
 
 tid_t threadId = 1;
 thread currThread = NULL;
@@ -72,10 +72,12 @@ tid_t lwp_create(lwpfun function, void* argument){
         return -1;
     }
 
-    unsigned long* stack_top = (unsigned long*)((char*)stack + newThread->stacksize);
-    *stack_top = (unsigned long)function;
+    unsigned long* stack_top = (unsigned long*)stack + (newThread->stacksize/sizeof(unsigned long));
+    newThread->stack = stack;
     stack_top--;
     *stack_top = (unsigned long)argument;
+    stack_top--;
+    *stack_top = (unsigned long)function;
     stack_top--;
     *stack_top = (unsigned long)lwp_wrap; //lwp(function, argument) ??  + 5? (dummy, lwp_wrap, func, args, ___)
 
@@ -90,11 +92,12 @@ tid_t lwp_create(lwpfun function, void* argument){
     newThread->state.rsi = (unsigned long)argument;
     newThread->state.rsp = (unsigned long)stack;
     newThread->status = LWP_LIVE;
-    newThread->exited = 0;
+    newThread->exited = NULL;
     newThread->lib_one = NULL;
     newThread->lib_two = NULL;
     newThread->sched_one = NULL;
     newThread->sched_two = NULL;
+    //stack point, base pointer, function, argument
 
 
     // put lwp wrap at top of stack so that it executes 
