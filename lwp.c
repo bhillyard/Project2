@@ -40,8 +40,10 @@ void lwp_exit(int exitval){ //wrong lol
         w->remove(waitThread);
         waitThread->exited = currThread;
         s->admit(waitThread);
-     } 
-     t->admit(currThread);
+     } else {
+        t->admit(currThread);
+     }
+     //t->admit(currThread);
      lwp_yield();
 }
 
@@ -74,9 +76,7 @@ tid_t lwp_create(lwpfun function, void* argument){
 
     unsigned long *stack = mmap(NULL, rlim.rlim_cur, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
     newThread->stack = (unsigned long *)stack;
-    newThread->state.rsp = (unsigned long)stack;
-    newThread->state.rbp = (unsigned long)stack; // top of stack address?
-
+    
     if (stack == MAP_FAILED) {
         perror("mmap");
         return -1;
@@ -87,7 +87,7 @@ tid_t lwp_create(lwpfun function, void* argument){
         exit(EXIT_FAILURE);
     }
 
-    newThread->stack = stack;
+    //newThread->stack = stack;
 
     stack += rlim.rlim_cur / sizeof(unsigned long);
 
@@ -96,7 +96,10 @@ tid_t lwp_create(lwpfun function, void* argument){
 
     *stack = (unsigned long)lwp_wrap;
     printf("Wrap on stack\n");
-    stack--;
+    stack--; //decrement 8 more bits
+
+    newThread->state.rsp = (unsigned long)stack;
+    newThread->state.rbp = (unsigned long)stack; // top of stack address?
 
 
     // Initialize Thread Info
@@ -150,8 +153,8 @@ void lwp_yield(void){
 }
 
 void lwp_start(void){
-    printf("Annie");
-    thread newThread = (thread)malloc(sizeof(thread));
+    //printf("Annie");
+    thread newThread = (thread)malloc(sizeof(context));
     newThread->tid = threadId;
     newThread->stack = NULL;
     newThread->status = LWP_LIVE;
