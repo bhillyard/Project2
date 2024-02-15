@@ -137,16 +137,20 @@ void lwp_yield(void){
     thread next = s->next();
     //printf("removing thread %d next\n", next->tid);
     //s->remove(next);
+    printf("gets here\n");
     if (next == NULL){
         if ((currThread->stack) != NULL){
-            free(currThread->stack);
+            //free(currThread->stack);
         }
-        free(currThread);
+        printf("abot to gg\n");
+        //free(currThread);
         exit(-1);
     }
     //first argument will populate the current registers
     thread temp = currThread;
     currThread = next; 
+    printf("aboutta swap\n");
+    printf("temp tid %d and tid currthread is %d\n", temp->tid, currThread->tid);
     swap_rfiles(&(temp->state), &(currThread->state));
     //printf("yielding and qlen is %d\n", s->qlen());
     //printf("thread %d going back into schduler\n", currThread->tid);
@@ -177,22 +181,22 @@ tid_t lwp_wait(int *status){
     if (len(tList) > 0){
         removed = dequeue(tList);
         if ((removed->stack) != NULL){
-            free(removed->stack);
+            //free(removed->stack);
         }
         id = removed->tid;
         *status = removed->status;
-        free(removed);
+        //free(removed);
     } else if (s->qlen() > 1){
         enqueue(wList, currThread);
         s->remove(currThread);
         lwp_yield();
         removed = currThread->exited;
         if ((removed->stack) != NULL){
-            free(removed->stack);
+            //free(removed->stack); //<---- BAD FREE IS HERE
         }
         id = removed->tid;
         *status = removed->status;
-        free(removed);
+        //free(removed);
     }
     return id;
 }
