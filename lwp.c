@@ -27,7 +27,7 @@ void lwp_exit(int exitval){ //wrong lol
         // if yes - admit oldest, remove from waiting list
     // list of dead threads, add currThread to dead threads
     // yield()
-     printf("EXITING SOMETHING\n");
+     //printf("EXITING SOMETHING\n");
      currThread->status = LWP_TERM;
      s->remove(currThread);
      int wLen = len(wList);
@@ -35,11 +35,13 @@ void lwp_exit(int exitval){ //wrong lol
      if (wLen > 0){
         //gets the waitlist thread and removes it from waitlist
         thread waitThread = dequeue(wList);
-        printf("WAITING THREAD PID IS %d\n", waitThread->tid);
+        //printf("WAITING THREAD PID IS %d\n", waitThread->tid);
         s->admit(waitThread);
         waitThread->exited = currThread;
-     } 
-     enqueue(tList, currThread);
+     } else {
+        enqueue(tList, currThread);
+     }
+
      //t->admit(currThread);
      lwp_yield();
 }
@@ -124,7 +126,7 @@ tid_t lwp_create(lwpfun function, void* argument){
     threadId += 1;
     
     s->admit(newThread);
-    printf("after admit\n");
+    //printf("after admit\n");
     return threadId-1;
 }
 
@@ -137,20 +139,20 @@ void lwp_yield(void){
     thread next = s->next();
     //printf("removing thread %d next\n", next->tid);
     //s->remove(next);
-    printf("gets here\n");
+    //printf("gets here\n");
     if (next == NULL){
         if ((currThread->stack) != NULL){
-            //free(currThread->stack);
+            munmap(currThread->stack, currThread->stacksize);
         }
-        printf("abot to gg\n");
-        //free(currThread);
+        //printf("abot to gg\n");
+        free(currThread);
         exit(-1);
     }
     //first argument will populate the current registers
     thread temp = currThread;
     currThread = next; 
-    printf("aboutta swap\n");
-    printf("temp tid %d and tid currthread is %d\n", temp->tid, currThread->tid);
+    //printf("aboutta swap\n");
+    //printf("temp tid %d and tid currthread is %d\n", temp->tid, currThread->tid);
     swap_rfiles(&(temp->state), &(currThread->state));
     //printf("yielding and qlen is %d\n", s->qlen());
     //printf("thread %d going back into schduler\n", currThread->tid);
@@ -177,26 +179,26 @@ void lwp_start(void){
 tid_t lwp_wait(int *status){
     tid_t id = NO_THREAD;
     thread removed;
-    printf("WE WAITING DOG\n");
+    //printf("WE WAITING DOG\n");
     if (len(tList) > 0){
         removed = dequeue(tList);
         if ((removed->stack) != NULL){
-            //free(removed->stack);
+            munmap(removed->stack, removed->stacksize);
         }
         id = removed->tid;
         *status = removed->status;
-        //free(removed);
+        free(removed);
     } else if (s->qlen() > 1){
         enqueue(wList, currThread);
         s->remove(currThread);
         lwp_yield();
         removed = currThread->exited;
         if ((removed->stack) != NULL){
-            //free(removed->stack); //<---- BAD FREE IS HERE
+            munmap(removed->stack, removed->stacksize); //<---- BAD FREE IS HERE
         }
         id = removed->tid;
         *status = removed->status;
-        //free(removed);
+        free(removed);
     }
     return id;
 }
