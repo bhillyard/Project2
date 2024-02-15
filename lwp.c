@@ -12,22 +12,13 @@
 
 #define STACK_SIZE_DEFAULT (8 * 1024 * 1024) // 8MB
 //LWP_TERM = 1
-//LWP_LIVE = 0 a
+//LWP_LIVE = 0
 
 tid_t threadId = 1;
 thread currThread = NULL;
 static scheduler s = &rr; //ready 
-static LinkedList wList = createLinkedList();
-static LinkedList tList = createLinkedList();
-//static scheduler t = &tt; //terminated / dead
-//static scheduler w = &ww; //waiting
-//access s with s->admit(lwp1) or s->next()
-
-//lwp exit exits pog
-//lwp wrap take eveyrthing manually (function, argument, return value lwpexit)
-//get context of register from swaprfiles
-
-//state struct 
+static LinkedList *wList;
+static LinkedList *tList;
 
 void lwp_exit(int exitval){ //wrong lol 
     // terminated status
@@ -39,15 +30,16 @@ void lwp_exit(int exitval){ //wrong lol
      printf("EXITING SOMETHING\n");
      currThread->status = LWP_TERM;
      s->remove(currThread);
-     printf("%d\n", len(wList));
-     if (len(wList) > 0){
-        thread waitThread = w->next();
+     int wLen = len(wList);
+     printf("%d\n", wLen);
+     if (wLen > 0){
+        //gets the waitlist thread and removes it from waitlist
+        thread waitThread = dequeue(wList);
         printf("WAITING THREAD PID IS %d\n", waitThread->tid);
         s->admit(waitThread);
-        w->remove(waitThread);
         waitThread->exited = currThread;
      } 
-     t->admit(currThread);
+     enqueue(tList, currThread);
      //t->admit(currThread);
      lwp_yield();
 }
@@ -163,6 +155,8 @@ void lwp_yield(void){
 }
 
 void lwp_start(void){
+    wList = createLinkedList();
+    tList = createLinkedList();
     //printf("Annie");
     thread newThread = (thread)malloc(sizeof(context));
     newThread->tid = threadId;
@@ -180,8 +174,8 @@ tid_t lwp_wait(int *status){
     tid_t id = NO_THREAD;
     thread removed;
     printf("WE WAITING DOG\n");
-    if (t->qlen() > 0){
-        removed = t->next();
+    if (len(tList) > 0){
+        removed = dequeue(tList);
         if ((removed->stack) != NULL){
             free(removed->stack);
         }
@@ -189,7 +183,7 @@ tid_t lwp_wait(int *status){
         *status = removed->status;
         free(removed);
     } else if (s->qlen() > 1){
-        w->admit(currThread);
+        enqueue(wList, currThread);
         s->remove(currThread);
         lwp_yield();
         removed = currThread->exited;

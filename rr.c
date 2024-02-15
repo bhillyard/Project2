@@ -2,14 +2,9 @@
 #include <stdlib.h>
 #include "lwp.h"
 
-// Define the structure for a node in the linked list
-typedef struct Node {
-    thread thread;
-    struct Node* next;
-} Node;
-
 // Initialize global head
 Node *head = NULL;
+Node *runningNode = NULL;
 
 // Function to print the linked list
 void printLinkedList(Node* head) {
@@ -97,13 +92,17 @@ void rr_remove(thread thread) {
 }
 
 thread rr_next(){
-    if (head == NULL){
-        return NULL;
+    if (runningNode == NULL){
+        runningNode = head;
+    } else if (runningNode->next != NULL){
+        runningNode = runningNode->next;
     } else {
-        //printf("head theadis is %d\n", head->thread->tid);
-        //printf("len is %d\n", rr_qlen());
-        //printLinkedList(head);
-        return head->thread;
+        runningNode = head;
+    }
+    if (runningNode != NULL){
+        return runningNode->thread;
+    } else {
+        return NULL;
     }
 }
 

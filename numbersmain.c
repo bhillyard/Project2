@@ -87,6 +87,7 @@ static void indentnum(void *num) {
   howfar=(long)num;              /* interpret num as an integer */
   for(i=0;i<howfar;i++){
     printf("%*d\n",howfar*5,howfar);
+    printf("about to yield\n");
     lwp_yield();                /* let another have a turn */
   }
   lwp_exit(i);                  /* bail when done.  This should

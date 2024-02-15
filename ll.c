@@ -2,13 +2,6 @@
 #include <stdlib.h>
 #include "lwp.h"
 
-// Node structure
-typedef struct Node {
-    thread thread;
-    struct Node* next;
-} Node;
-
-
 // Linked list structure
 typedef struct LinkedList {
     Node* head;
@@ -32,8 +25,8 @@ LinkedList* createLinkedList() {
 }
 
 // always queue elements on back of list
-void enqueue(LinkedList* list, int data) {
-    Node* newNode = createNode(data);
+void enqueue(LinkedList* list, thread thread) {
+    Node* newNode = createNode(thread);
     if (list->head == NULL) {
         list->head = newNode;
         list->tail = newNode;
@@ -43,9 +36,20 @@ void enqueue(LinkedList* list, int data) {
     }
 }
 
-// get head of linked list
-Node* front(LinkedList* list) {
-    return list->head;
+ // get head of linked list and detach it
+thread dequeue(LinkedList* list) {
+    Node* head = list->head;
+    if (head != NULL) {
+        list->head = head->next;
+        if (list->tail == head) {
+            list->tail = NULL;
+        }
+        head->next = NULL;
+        thread dequeuedThread = head->thread;
+        free(head);
+        return dequeuedThread;
+    }
+    return NULL;
 }
 
 // get length
@@ -61,7 +65,7 @@ int len(LinkedList* list) {
 
 
 // print linked list
-void printLinkedList(LinkedList* list) {
+void printList(LinkedList* list) {
     Node* current = list->head;
     while (current != NULL) {
         printf("%d ", current->thread->tid);

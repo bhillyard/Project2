@@ -43,11 +43,11 @@ hungrysnakes.o: lwp.h snakes.h
 
 randomsnakes.o: lwp.h snakes.h
 
-numbermain.o: lwp.h
+numbermain.o: lwp.h node.h
 
 libLWP.a: lwp.c rr.c util.c
-	gcc -c rr.c util.c lwp.c magic64.S 
-	ar r libLWP.a util.o lwp.o rr.o magic64.o
+	gcc -c rr.c util.c lwp.c ll.c magic64.S 
+	ar r libLWP.a util.o lwp.o rr.o ll.o magic64.o
 	rm lwp.o
 
 submission: lwp.c rr.c util.c Makefile README
