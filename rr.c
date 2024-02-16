@@ -105,6 +105,8 @@ thread rr_next(){
         return NULL;
     }
 }
+//maybe get head and send to end
+// check status variable passed into lwpwait
 
 int rr_qlen(){
     int count = 0;

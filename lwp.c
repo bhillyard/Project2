@@ -28,10 +28,10 @@ void lwp_exit(int exitval){ //wrong lol
     // list of dead threads, add currThread to dead threads
     // yield()
      //printf("EXITING SOMETHING\n");
-     currThread->status = LWP_TERM;
+     currThread->status = MKTERMSTAT(LWP_TERM, exitval); 
      s->remove(currThread);
      int wLen = len(wList);
-     printf("%d\n", wLen);
+     //printf("%d\n", wLen);
      if (wLen > 0){
         //gets the waitlist thread and removes it from waitlist
         thread waitThread = dequeue(wList);
@@ -186,7 +186,9 @@ tid_t lwp_wait(int *status){
             munmap(removed->stack, removed->stacksize);
         }
         id = removed->tid;
-        *status = removed->status;
+        if (status){
+            *status = removed->status;
+        }
         free(removed);
     } else if (s->qlen() > 1){
         enqueue(wList, currThread);
@@ -197,7 +199,9 @@ tid_t lwp_wait(int *status){
             munmap(removed->stack, removed->stacksize); //<---- BAD FREE IS HERE
         }
         id = removed->tid;
-        *status = removed->status;
+        if (status){
+            *status = removed->status;
+        }
         free(removed);
     }
     return id;
