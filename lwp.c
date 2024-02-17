@@ -21,28 +21,17 @@ static LinkedList *wList;
 static LinkedList *tList;
 
 void lwp_exit(int exitval){ //wrong lol 
-    // terminated status
-    // remove from scheduler
-    // check for waiting (all associated with dead)
-        // if yes - admit oldest, remove from waiting list
-    // list of dead threads, add currThread to dead threads
-    // yield()
-     //printf("EXITING SOMETHING\n");
      currThread->status = MKTERMSTAT(LWP_TERM, exitval); 
      s->remove(currThread);
      int wLen = len(wList);
-     //printf("%d\n", wLen);
      if (wLen > 0){
         //gets the waitlist thread and removes it from waitlist
         thread waitThread = dequeue(wList);
-        //printf("WAITING THREAD PID IS %d\n", waitThread->tid);
         s->admit(waitThread);
         waitThread->exited = currThread;
      } else {
         enqueue(tList, currThread);
      }
-
-     //t->admit(currThread);
      lwp_yield();
 }
 
@@ -53,9 +42,7 @@ static void lwp_wrap(lwpfun function, void* argument){
 }
 
 tid_t lwp_create(lwpfun function, void* argument){
-    thread newThread = (thread)malloc(sizeof(context));
-    //printf("got here\n");
-    
+    thread newThread = (thread)malloc(sizeof(context));  
     long page_size = sysconf(_SC_PAGE_SIZE);
     if (page_size == -1){
         perror("sysconf");
@@ -70,9 +57,6 @@ tid_t lwp_create(lwpfun function, void* argument){
 
     // Round to nearest multiple of page size
     rlim.rlim_cur = (rlim.rlim_cur + page_size - 1) / page_size * page_size;
-    //printf("%d\n", rlim.rlim_cur);
-    //printf("Hello\n");
-
     unsigned long *stack = mmap(NULL, rlim.rlim_cur, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
     newThread->stack = (unsigned long *)stack;
     
@@ -85,25 +69,19 @@ tid_t lwp_create(lwpfun function, void* argument){
         perror("Stack not aligned");
         exit(EXIT_FAILURE);
     }
-
-    //newThread->stack = stack;
-
     stack += rlim.rlim_cur / sizeof(unsigned long);
 
     stack--; //decrement 8 bits
     stack--; //decrement 8 bits
 
     *stack = (unsigned long)lwp_wrap;
-    //printf("Wrap on stack\n");
     stack--; //decrement 8 more bits
 
     newThread->state.rsp = (unsigned long)stack;
-    newThread->state.rbp = (unsigned long)stack; // top of stack address?
-
+    newThread->state.rbp = (unsigned long)stack; 
 
     // Initialize Thread Info
     newThread->tid = threadId;
-    //newThread->stack = stack;
     newThread->stacksize = (size_t)rlim.rlim_cur; 
     newThread->state.fxsave = FPU_INIT;
     newThread->state.rdi = (unsigned long)function;
@@ -114,19 +92,9 @@ tid_t lwp_create(lwpfun function, void* argument){
     newThread->lib_two = NULL;
     newThread->sched_one = NULL;
     newThread->sched_two = NULL;
-    //stack point, base pointer, function, argument
-    //printf("futher\n");
 
-    // put lwp wrap at top of stack so that it executes 
-    //subtract 1 from stack pointer = subtract 8
-    // stack[rlim.rlim_cur] = lwp_wrap(function, argument);
-    //put dummy number at s+size-1 
-    //put lwpwrap at s+size-2
-    //
     threadId += 1;
-    
     s->admit(newThread);
-    //printf("after admit\n");
     return threadId-1;
 }
 
@@ -135,35 +103,22 @@ tid_t lwp_gettid(void){
 }
 
 void lwp_yield(void){
-    //need a mysterious error check here that is not swaprfiles?
     thread next = s->next();
-    //printf("removing thread %d next\n", next->tid);
-    //s->remove(next);
-    //printf("gets here\n");
     if (next == NULL){
         if ((currThread->stack) != NULL){
             munmap(currThread->stack, currThread->stacksize);
         }
-        //printf("abot to gg\n");
         free(currThread);
         exit(-1);
     }
-    //first argument will populate the current registers
     thread temp = currThread;
     currThread = next; 
-    //printf("aboutta swap\n");
-    //printf("temp tid %d and tid currthread is %d\n", temp->tid, currThread->tid);
     swap_rfiles(&(temp->state), &(currThread->state));
-    //printf("yielding and qlen is %d\n", s->qlen());
-    //printf("thread %d going back into schduler\n", currThread->tid);
-    //s->admit(currThread);
-    //currThread = next;
 }
 
 void lwp_start(void){
     wList = createLinkedList();
     tList = createLinkedList();
-    //printf("Annie");
     thread newThread = (thread)malloc(sizeof(context));
     newThread->tid = threadId;
     newThread->stack = NULL;
@@ -234,20 +189,3 @@ thread tid2thread(tid_t tid){
 void test(){
     printf("Hello\n");
 }
-
-// int main() {
-//     lwp_create((lwpfun)&test, NULL);
-// }
-
-//use function call to go back to the main thread that you have
-//go back call at the very top of the stack (manually go up there and put it in)
-// and then have emptyness below
-
-//remember to unmap using munmap()
-
-//yielding = scheduler determing what is coming next (call to next) swap in context and swap out old one
-//yield function = 4 or 5 lines
-//swap context, determine which thread you are yielding to
-
-//take pointer to stack (base of the stack and add the size of the stack to jump to top of stack)
-//then put exit to go back to main function
