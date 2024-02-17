@@ -16,16 +16,15 @@
 
 tid_t threadId = 1;
 thread currThread = NULL;
-static scheduler s = &rr; //ready 
+static scheduler s = &rr; 
 static LinkedList *wList;
 static LinkedList *tList;
 
-void lwp_exit(int exitval){ //wrong lol 
+void lwp_exit(int exitval){ 
      currThread->status = MKTERMSTAT(LWP_TERM, exitval); 
      s->remove(currThread);
      int wLen = len(wList);
      if (wLen > 0){
-        //gets the waitlist thread and removes it from waitlist
         thread waitThread = dequeue(wList);
         s->admit(waitThread);
         waitThread->exited = currThread;
@@ -134,7 +133,6 @@ void lwp_start(void){
 tid_t lwp_wait(int *status){
     tid_t id = NO_THREAD;
     thread removed;
-    //printf("WE WAITING DOG\n");
     if (len(tList) > 0){
         removed = dequeue(tList);
         if ((removed->stack) != NULL){
