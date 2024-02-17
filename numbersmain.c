@@ -49,27 +49,30 @@
 
 static void indentnum(void *num);
 
+static void indentnum(void *num);
+
 int main(int argc, char *argv[]){
   long i;
 
-  // printf("Launching LWPS\n");
+  printf("Launching LWPS\n");
 
   /* spawn a number of individual LWPs */
   for(i=1;i<=5;i++) {
     lwp_create((lwpfun)indentnum,(void*)i);
   }
+
   lwp_start();
+
   /* wait for the other LWPs */
   for(i=1;i<=5;i++) {
     int status,num;
     tid_t t;
     t = lwp_wait(&status);
-    //printf("after wait\n");
     num = LWPTERMSTAT(status);
     printf("Thread %ld exited with status %d\n",t,num);
   }
 
-  // printf("Back from LWPS.\n");
+  printf("Back from LWPS.\n");
   lwp_exit(0);
   return 0;
 }
@@ -84,7 +87,6 @@ static void indentnum(void *num) {
   howfar=(long)num;              /* interpret num as an integer */
   for(i=0;i<howfar;i++){
     printf("%*d\n",howfar*5,howfar);
-    //printf("about to yield\n");
     lwp_yield();                /* let another have a turn */
   }
   lwp_exit(i);                  /* bail when done.  This should
