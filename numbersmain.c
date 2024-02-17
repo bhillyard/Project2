@@ -52,27 +52,24 @@ static void indentnum(void *num);
 int main(int argc, char *argv[]){
   long i;
 
-  printf("Launching LWPS\n");
+  // printf("Launching LWPS\n");
 
   /* spawn a number of individual LWPs */
   for(i=1;i<=5;i++) {
     lwp_create((lwpfun)indentnum,(void*)i);
   }
-  //printf("before start\n");
   lwp_start();
-  //printf("after start\n");
   /* wait for the other LWPs */
   for(i=1;i<=5;i++) {
     int status,num;
     tid_t t;
-    //printf("before waitDdddDDDDDDDDDDDDD\n");
     t = lwp_wait(&status);
     //printf("after wait\n");
     num = LWPTERMSTAT(status);
     printf("Thread %ld exited with status %d\n",t,num);
   }
 
-  printf("Back from LWPS.\n");
+  // printf("Back from LWPS.\n");
   lwp_exit(0);
   return 0;
 }
