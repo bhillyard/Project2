@@ -24,6 +24,7 @@ void lwp_exit(int exitval){
      currThread->status = MKTERMSTAT(LWP_TERM, exitval); 
      s->remove(currThread);
      int wLen = len(wList);
+     //check for waiting threads and if there is one set exited status to the recently terminated thread
      if (wLen > 0){
         thread waitThread = dequeue(wList);
         s->admit(waitThread);
@@ -101,6 +102,7 @@ tid_t lwp_gettid(void){
     return threadId;
 }
 
+//yield to next thread if there is one
 void lwp_yield(void){
     thread next = s->next();
     if (next == NULL){
@@ -112,11 +114,14 @@ void lwp_yield(void){
     }
     thread temp = currThread;
     currThread = next; 
+    //swap context to new thread
     swap_rfiles(&(temp->state), &(currThread->state));
 }
 
 void lwp_start(void){
+    //create list for waiting threads
     wList = createLinkedList();
+    //create list for terminated threads
     tList = createLinkedList();
     thread newThread = (thread)malloc(sizeof(context));
     newThread->tid = threadId;
@@ -133,6 +138,7 @@ void lwp_start(void){
 tid_t lwp_wait(int *status){
     tid_t id = NO_THREAD;
     thread removed;
+    //check if there is terminated threads
     if (len(tList) > 0){
         removed = dequeue(tList);
         if ((removed->stack) != NULL){
@@ -143,13 +149,14 @@ tid_t lwp_wait(int *status){
             *status = removed->status;
         }
         free(removed);
+    //else check if there atleast 1 process still running
     } else if (s->qlen() > 1){
         enqueue(wList, currThread);
         s->remove(currThread);
         lwp_yield();
         removed = currThread->exited;
         if ((removed->stack) != NULL){
-            munmap(removed->stack, removed->stacksize); //<---- BAD FREE IS HERE
+            munmap(removed->stack, removed->stacksize);
         }
         id = removed->tid;
         if (status){
@@ -181,9 +188,4 @@ thread tid2thread(tid_t tid){
         curr = curr->lib_one;
     }
     return NULL;
-}
-
-
-void test(){
-    printf("Hello\n");
 }
